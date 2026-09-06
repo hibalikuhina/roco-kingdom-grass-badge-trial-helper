@@ -19,6 +19,7 @@ import numpy as np
 from PIL import Image
 
 from . import config, features, imaging
+from .i18n import t
 
 DEFAULT_ROOT = Path(__file__).resolve().parent.parent / "data"
 _DB_DIR_RE = re.compile(r"^db_(\d+)$")
@@ -110,7 +111,7 @@ class IconDB:
     def create(cls, root: Path, db_id: int, name: str = "") -> "IconDB":
         db = cls(root, db_id)
         if db.exists:
-            raise FileExistsError(f"database {db_id} already exists at {db.dir}")
+            raise FileExistsError(t("db.exists", id=db_id, path=db.dir))
         db.norm_dir.mkdir(parents=True, exist_ok=True)
         db.raw_dir.mkdir(parents=True, exist_ok=True)
         db.meta = {
@@ -128,7 +129,7 @@ class IconDB:
     def open(cls, root: Path, db_id: int) -> "IconDB":
         db = cls(root, db_id)
         if not db.exists:
-            raise FileNotFoundError(f"no database {db_id} under {db.root}")
+            raise FileNotFoundError(t("db.not_found", id=db_id, root=db.root))
         db.load()
         return db
 

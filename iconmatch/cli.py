@@ -6,6 +6,8 @@
     python -m iconmatch.cli add   --db 1 folder/*.png --force
     python -m iconmatch.cli add   --db 1 grid_screenshot.png   # split automatically
     python -m iconmatch.cli remove --db 1 0003
+
+Messages follow the language set with --lang (Simplified Chinese by default).
 """
 from __future__ import annotations
 
@@ -15,8 +17,9 @@ from pathlib import Path
 
 from PIL import Image
 
-from . import imaging
+from . import i18n, imaging
 from .database import DEFAULT_ROOT, IconDB, list_dbs
+from .i18n import t
 
 
 def _open_or_create(root: Path, db_id: int, create: bool) -> IconDB:
@@ -25,33 +28,46 @@ def _open_or_create(root: Path, db_id: int, create: bool) -> IconDB:
         db.load()
         return db
     if not create:
-        raise SystemExit(f"no database {db_id} under {root} (use --create)")
+        raise SystemExit(t("cli.no_db", id=db_id, root=root))
     return IconDB.create(root, db_id)
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="iconmatch.cli", description=__doc__,
+    # --lang has to be read before the help texts are built
+    pre = argparse.ArgumentParser(add_help=False)
+    pre.add_argument("--lang", choices=sorted(i18n.LANGUAGES))
+    known, _ = pre.parse_known_args(argv)
+    if known.lang:
+        i18n.set_language(known.lang)
+    else:
+        i18n.load_language()
+    try:                                  # never die on a console that cannot
+        sys.stdout.reconfigure(errors="replace")   # encode a Chinese message
+    except Exception:                     # pragma: no cover - odd stdout
+        pass
+
+    ap = argparse.ArgumentParser(prog="iconmatch.cli", description=t("cli.desc"),
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--root", type=Path, default=DEFAULT_ROOT, help="database root folder")
+    ap.add_argument("--root", type=Path, default=DEFAULT_ROOT, help=t("cli.help.root"))
+    ap.add_argument("--lang", choices=sorted(i18n.LANGUAGES), help=t("cli.help.lang"))
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    sub.add_parser("list", help="list databases")
+    sub.add_parser("list", help=t("cli.help.list"))
 
-    p = sub.add_parser("match", help="match image files against a database")
+    p = sub.add_parser("match", help=t("cli.help.match"))
     p.add_argument("--db", type=int, required=True)
     p.add_argument("files", nargs="+", type=Path)
     p.add_argument("--top", type=int, default=3)
 
-    p = sub.add_parser("add", help="add image files to a database")
+    p = sub.add_parser("add", help=t("cli.help.add"))
     p.add_argument("--db", type=int, required=True)
     p.add_argument("files", nargs="+", type=Path)
-    p.add_argument("--name", default="", help="only meaningful with a single file")
-    p.add_argument("--create", action="store_true", help="create the database if missing")
-    p.add_argument("--force", action="store_true", help="add even if a similar icon exists")
-    p.add_argument("--no-split", action="store_true",
-                   help="treat each file as one icon instead of auto-splitting a grid")
+    p.add_argument("--name", default="", help=t("cli.help.name"))
+    p.add_argument("--create", action="store_true", help=t("cli.help.create"))
+    p.add_argument("--force", action="store_true", help=t("cli.help.force"))
+    p.add_argument("--no-split", action="store_true", help=t("cli.help.no_split"))
 
-    p = sub.add_parser("remove", help="remove an icon by id")
+    p = sub.add_parser("remove", help=t("cli.help.remove"))
     p.add_argument("--db", type=int, required=True)
     p.add_argument("icon_id")
 
@@ -60,9 +76,9 @@ def main(argv=None) -> int:
     if args.cmd == "list":
         rows = list_dbs(args.root)
         if not rows:
-            print(f"no databases under {args.root}")
+            print(t("cli.no_dbs", root=args.root))
         for db_id, count in rows:
-            print(f"DB {db_id:03d}  {count} icon(s)")
+            print(t("cli.db_row", id=db_id, count=count))
         return 0
 
     if args.cmd == "match":
@@ -70,12 +86,13 @@ def main(argv=None) -> int:
         for f in args.files:
             found = db.search(Image.open(f), top=args.top)
             if not found.results:
-                print(f"{f}: N (database is empty)")
+                print(t("cli.match_empty", file=f))
                 continue
             verdict = "Y" if db.is_match(found) else "N"
             extra = "  ".join(f"{i.id}:{s:.3f}" for i, s in found.results[1:])
-            print(f"{f}: {verdict}  best={found.best.id} {found.best.name} "
-                  f"sim={found.similarity:.3f} standout={found.confidence:.3f}   {extra}")
+            print(t("cli.match_row", file=f, verdict=verdict, id=found.best.id,
+                    name=found.best.name, sim=found.similarity,
+                    rel=found.confidence, extra=extra))
         return 0
 
     if args.cmd == "add":
@@ -84,7 +101,7 @@ def main(argv=None) -> int:
             image = Image.open(f)
             crops = [] if args.no_split else imaging.split_grid(image)
             if crops:
-                print(f"{f}: grid of {len(crops)} icons")
+                print(t("cli.grid", file=f, count=len(crops)))
                 pieces = [(c, f"{f.stem}_{i:02d}") for i, c in enumerate(crops)]
             else:
                 pieces = [(image, args.name
@@ -92,18 +109,18 @@ def main(argv=None) -> int:
             for piece, name in pieces:
                 found = db.search(piece, top=1)
                 if db.is_duplicate(found) and not args.force:
-                    print(f"  {name}: SKIPPED - too similar to {found.best.id} "
-                          f"{found.best.name} (sim={found.similarity:.3f} "
-                          f"standout={found.confidence:.3f}); use --force to add anyway")
+                    print(t("cli.skipped", name=name, id=found.best.id,
+                            best=found.best.name, sim=found.similarity,
+                            rel=found.confidence))
                     continue
                 icon = db.add(piece, name, tile=found.tile)
-                print(f"  {name}: added as {icon.id} {icon.name}")
+                print(t("cli.added", name=name, id=icon.id, stored=icon.name))
         return 0
 
     if args.cmd == "remove":
         db = _open_or_create(args.root, args.db, create=False)
         db.remove(args.icon_id)
-        print(f"removed {args.icon_id}")
+        print(t("cli.removed", id=args.icon_id))
         return 0
 
     return 1

@@ -5,6 +5,8 @@ from pathlib import Path
 
 from PIL import Image, ImageGrab
 
+from .i18n import t
+
 
 class ClipboardError(RuntimeError):
     pass
@@ -15,7 +17,7 @@ def grab_image() -> Image.Image:
     try:
         data = ImageGrab.grabclipboard()
     except Exception as exc:                      # pragma: no cover - OS specific
-        raise ClipboardError(f"could not read the clipboard: {exc}") from exc
+        raise ClipboardError(t("clip.read_failed", error=exc)) from exc
 
     if isinstance(data, Image.Image):
         return data
@@ -28,5 +30,5 @@ def grab_image() -> Image.Image:
                 return img
             except Exception:
                 continue
-        raise ClipboardError("the clipboard holds files, but none of them is an image")
-    raise ClipboardError("the clipboard does not contain an image")
+        raise ClipboardError(t("clip.files_no_image"))
+    raise ClipboardError(t("clip.no_image"))
