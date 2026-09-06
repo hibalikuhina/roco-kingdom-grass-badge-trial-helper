@@ -21,7 +21,7 @@
 
 ### 一、下载打包好的程序（推荐）
 
-到 [Releases](../../releases) 下载 `RocoKingdomTrailHelper.exe`，双击就能用，
+到 [Releases](../../releases) 下载 `RocoKingdomTrialHelper.exe`，双击就能用，
 不需要装 Python。
 
 > Windows 会对没有数字签名的程序弹一个 SmartScreen 提示：点“更多信息”→

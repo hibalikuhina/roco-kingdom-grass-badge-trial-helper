@@ -6,7 +6,7 @@ under a stable key.  Call sites use :func:`t`::
     t("status.reloaded", id=db.id)
 
 The chosen language is remembered between runs in a small settings file under
-the user's config folder (``%APPDATA%/roco-trail-helper/settings.json`` on
+the user's config folder (``%APPDATA%/roco-trial-helper/settings.json`` on
 Windows), so it survives switching database folders and re-installing.
 """
 from __future__ import annotations
@@ -26,7 +26,7 @@ def _settings_path() -> Path:
     base = os.environ.get("APPDATA")
     if not base:
         base = os.environ.get("XDG_CONFIG_HOME") or str(Path.home() / ".config")
-    return Path(base) / "roco-trail-helper" / "settings.json"
+    return Path(base) / "roco-trial-helper" / "settings.json"
 
 
 def load_language() -> str:
@@ -82,7 +82,7 @@ def t(key: str, **kwargs) -> str:
 STRINGS: dict[str, tuple[str, str]] = {
     # ---------------------------------------------------------- shell / app
     "app.title": ("洛克王国 草系徽章试炼 助手",
-                  "Roco Kingdom Grass Badge Trail Helper"),
+                  "Roco Kingdom Grass Badge Trial Helper"),
     "menu.language": ("语言 / Language", "语言 / Language"),
     "status.language_switched": ("界面语言已切换为简体中文。",
                                  "Interface language switched to English."),

@@ -1,7 +1,7 @@
 ﻿<#
 .SYNOPSIS
     启动“洛克王国 草系徽章试炼 助手”。
-    Start the Roco Kingdom Grass Badge Trail Helper.
+    Start the Roco Kingdom Grass Badge Trial Helper.
 
 .DESCRIPTION
     如果虚拟环境不存在（或者缺了依赖包），会先自动装好，然后启动图形界面。

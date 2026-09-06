@@ -1,4 +1,4 @@
-# Roco Kingdom Grass Badge Trail Helper
+# Roco Kingdom Grass Badge Trial Helper
 
 > Paste a spirit's icon and it tells you whether you have battled it before.
 
@@ -8,7 +8,7 @@
 
 ## What this solves
 
-On the grass badge trail, **the game pays out according to how many different
+On the grass badge trial, **the game pays out according to how many different
 spirits you have battled at each level** — but the game's UI never tells you
 whether you have already fought a given spirit.
 
@@ -25,7 +25,7 @@ This program does it for you:
 
 ### 1. Download the built program (recommended)
 
-Grab `RocoKingdomTrailHelper.exe` from [Releases](../../releases) and run it — no
+Grab `RocoKingdomTrialHelper.exe` from [Releases](../../releases) and run it — no
 Python needed.
 
 > Windows shows a SmartScreen prompt for programs without a digital signature:
