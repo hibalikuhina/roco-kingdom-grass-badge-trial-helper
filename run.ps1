@@ -1,11 +1,11 @@
 ﻿<#
 .SYNOPSIS
-    启动“洛克王国 草系徽章之旅 助手”。
+    启动“洛克王国 草系徽章试炼 助手”。
     Start the Roco Kingdom Grass Badge Trail Helper.
 
 .DESCRIPTION
     如果虚拟环境不存在（或者缺了依赖包），会先自动装好，然后启动图形界面。
-    平时直接运行、不带任何参数就行：没有黑框控制台，图鉴存在 .\data 里，
+    平时直接运行、不带任何参数就行：没有黑框控制台，数据库存在 .\data 里，
     程序在后台运行，不占用当前这个终端。
 
     Prepares the virtualenv if it is missing (or if its packages are), then
@@ -13,7 +13,7 @@
     databases in .\data, and the app detached so this shell stays free.
 
 .PARAMETER Root
-    存放 db_XXX 图鉴文件夹的目录，默认是脚本旁边的 .\data。
+    存放 db_XXX 数据库文件夹的目录，默认是脚本旁边的 .\data。
     想分开管理不同的收藏时用它，例如 -Root D:\icons\roco。
 
     Folder holding the db_XXX directories.  Default: .\data next to this script.
@@ -67,7 +67,7 @@
 
 .EXAMPLE
     .\run.ps1 -Root D:\icons\roco
-    使用另一组图鉴。 / Start on a different collection of databases.
+    使用另一组数据库。 / Start on a different collection of databases.
 
 .EXAMPLE
     .\run.ps1 -Console -Log .\iconmatcher.log
@@ -108,7 +108,7 @@ function Install-Venv {
         $launcherArgs = @('-3')
     }
     if (-not $interpreter) {
-        throw "PATH 上找不到 Python 3，请先安装 Python 3.10+（python.org）再运行。  /  " +
+        throw "PATH 上找不到 Python 3，先安装 Python 3.10+（python.org）再运行。  /  " +
               "No Python 3 found on PATH. Install Python 3.10+ (python.org) and run this again."
     }
     & $interpreter.Source @launcherArgs -m venv $venv
@@ -147,7 +147,7 @@ if (-not $SkipChecks) {
 }
 
 if (-not (Test-Path $py)) {
-    throw "$venv 里没有虚拟环境，请去掉 -SkipChecks 再运行一次以创建它。  /  " +
+    throw "$venv 里没有虚拟环境，去掉 -SkipChecks 再运行一次来创建它。  /  " +
           "No virtualenv at $venv. Run this script without -SkipChecks to build it."
 }
 
@@ -186,7 +186,7 @@ if ($Wait) {
 }
 
 $where = if ($Root) { $resolved } else { Join-Path $here 'data' }
-Write-Host "助手已启动（PID $($proc.Id)），图鉴目录：$where"
+Write-Host "助手已启动（PID $($proc.Id)），数据库目录：$where"
 Write-Host "Helper started (PID $($proc.Id)).  Databases: $where"
 if ($Log) {
     Write-Host "输出：$Log （错误：$Log.err）  /  Output: $Log  (errors: $Log.err)"
