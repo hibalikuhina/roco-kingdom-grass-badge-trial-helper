@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import re
 import shutil
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -21,7 +22,19 @@ from PIL import Image
 from . import config, features, imaging
 from .i18n import t
 
-DEFAULT_ROOT = Path(__file__).resolve().parent.parent / "data"
+def _default_root() -> Path:
+    """Where the db_XXX folders live.
+
+    A PyInstaller one-file build unpacks itself into a temp directory that is
+    wiped on exit, so ``__file__`` is the one place the databases must *not*
+    go: they belong next to the exe the user actually keeps.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent / "data"
+    return Path(__file__).resolve().parent.parent / "data"
+
+
+DEFAULT_ROOT = _default_root()
 _DB_DIR_RE = re.compile(r"^db_(\d+)$")
 
 
