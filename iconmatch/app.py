@@ -211,6 +211,11 @@ class BatchAddDialog(tk.Toplevel):
 
     ROW_BG = "#fafafa"
     UNDECIDED_BG = "#fff3d6"
+    # A radiobutton whose variable equals its -tristatevalue (the empty string,
+    # by default) draws itself in tri-state, which on Windows looks *ticked*.
+    # An undecided row therefore has to hold a non-empty sentinel, or both
+    # sides of the row appear chosen at once.
+    UNDECIDED = "?"
 
     def __init__(self, master, db, items):
         """items: [(crop, SearchResult), ...] in reading order."""
@@ -241,7 +246,7 @@ class BatchAddDialog(tk.Toplevel):
             conflict = db.is_duplicate(found)
             if conflict:
                 self.conflicts.append(index)
-            choice = tk.StringVar(value="" if conflict else "add")
+            choice = tk.StringVar(value=self.UNDECIDED if conflict else "add")
             choice.trace_add("write", lambda *_a, i=index: self._on_choice(i))
             self.choices.append(choice)
 
@@ -310,7 +315,8 @@ class BatchAddDialog(tk.Toplevel):
     # ------------------------------------------------------------- choices
     def _on_choice(self, index: int):
         row = self.rows[index]
-        colour = self.ROW_BG if self.choices[index].get() else self.UNDECIDED_BG
+        decided = self.choices[index].get() != self.UNDECIDED
+        colour = self.ROW_BG if decided else self.UNDECIDED_BG
         row.configure(bg=colour)
         for child in row.winfo_children():
             if not isinstance(child, ttk.Entry):
@@ -319,12 +325,13 @@ class BatchAddDialog(tk.Toplevel):
 
     def _resolve_rest(self, value: str):
         for choice in self.choices:
-            if not choice.get():
+            if choice.get() == self.UNDECIDED:
                 choice.set(value)
 
     def _counts(self):
         values = [c.get() for c in self.choices]
-        return values.count("add"), values.count("skip"), values.count("")
+        return (values.count("add"), values.count("skip"),
+                values.count(self.UNDECIDED))
 
     def _refresh_summary(self):
         add, skip, undecided = self._counts()
@@ -521,14 +528,15 @@ class App:
         ttk.Button(top, text=t("main.switch_db"), command=self.choose_db).pack(side="left", padx=10)
         ttk.Button(top, text=t("main.open_folder"), command=self.open_folder).pack(side="left")
 
-        ttk.Label(top, text=t("main.rel_label")).pack(side="right", padx=(2, 10))
+        # packed right to left, so each label ends up to the LEFT of its own box
         self.rel_var = tk.DoubleVar(value=config.MATCH_REL)
         ttk.Spinbox(top, from_=0.0, to=1.0, increment=0.05, width=5, format="%.2f",
                     textvariable=self.rel_var, command=self._save_thresholds).pack(side="right")
-        ttk.Label(top, text=t("main.sim_label")).pack(side="right", padx=(12, 10))
+        ttk.Label(top, text=t("main.rel_label")).pack(side="right", padx=(16, 6))
         self.sim_var = tk.DoubleVar(value=config.MATCH_SIM)
         ttk.Spinbox(top, from_=0.0, to=1.0, increment=0.01, width=5, format="%.2f",
                     textvariable=self.sim_var, command=self._save_thresholds).pack(side="right")
+        ttk.Label(top, text=t("main.sim_label")).pack(side="right", padx=(16, 6))
 
         self.verdict = tk.Label(self.root, text=t("idle_hint"),
                                 font=(ui_font(), 16, "bold"), bg="#e9e9e9", fg="#333", pady=10)
